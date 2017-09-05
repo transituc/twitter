@@ -33,7 +33,7 @@ module Twitter
 
             if r.nil?
               ssl_client.close
-              raise ::IOError "Connection stalled"
+              raise ::IOError
               break
             end
 
