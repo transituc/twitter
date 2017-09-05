@@ -18,9 +18,29 @@ module Twitter
 
         ssl_client.connect
         request.stream(ssl_client)
-        while body = ssl_client.readpartial(1024) # rubocop:disable AssignmentInCondition
-          response << body
+        
+        # Patch gotten from https://github.com/sferik/twitter/issues/664, by nidev.
+        loop do
+          begin
+            body = ssl_client.read_nonblock(1024)
+            response << body
+          rescue IO::WaitReadable
+            puts "[#{DateTime.now.to_s}] Calling IO.select() in Twitter::Streaming::Connection.stream."
+
+            # The reason for setting 90 seconds as a timeout is documented on:
+            # https://dev.twitter.com/streaming/overview/connecting
+            r, w, e = IO.select([ssl_client], [], [], 90)
+
+            if r.nil?
+              ssl_client.close
+              raise IOError "Connection stalled"
+              break
+            end
+
+            retry
+          end
         end
+
       end
     end
   end
