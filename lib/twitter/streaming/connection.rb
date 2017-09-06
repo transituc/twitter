@@ -25,8 +25,6 @@ module Twitter
             body = ssl_client.read_nonblock(1024)
             response << body
           rescue IO::WaitReadable
-            puts "[#{DateTime.now.to_s}] Calling IO.select() in Twitter::Streaming::Connection.stream."
-
             # The reason for setting 90 seconds as a timeout is documented on:
             # https://dev.twitter.com/streaming/overview/connecting
             r, w, e = IO.select([ssl_client], [], [], 90)
